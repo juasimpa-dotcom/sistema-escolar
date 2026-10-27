@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:8000/api/v1`,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -25,7 +24,9 @@ api.interceptors.response.use(
       typeof body === 'object' &&
       Array.isArray(body.data) &&
       body.meta &&
-      typeof body.meta === 'object'
+      typeof body.meta === 'object' &&
+      Array.isArray(body.links) &&
+      !('graficos' in body)
     ) {
       const { meta } = body;
       response.data = {

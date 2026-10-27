@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import type { Usuario } from '../types/auth';
 
@@ -15,6 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (ci: string, password: string) => {
     const { data } = await api.post('/auth/login', { ci, password });
+    queryClient.clear();
     localStorage.setItem('token', data.token);
     setToken(data.token);
     setUser(data.user);
@@ -51,6 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await api.post('/auth/logout');
     } finally {
+      queryClient.clear();
       localStorage.removeItem('token');
       setToken(null);
       setUser(null);

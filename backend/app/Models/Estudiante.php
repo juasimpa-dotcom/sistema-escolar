@@ -76,4 +76,9 @@ class Estudiante extends Model
     {
         return $this->hasMany(Citacion::class);
     }
+
+    public function fichaEventos(): HasMany
+    {
+        return $this->hasMany(FichaEstudianteEvento::class);
+    }
 }

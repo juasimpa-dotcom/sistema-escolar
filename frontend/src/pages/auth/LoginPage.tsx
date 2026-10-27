@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Eye, EyeOff, GraduationCap, Loader2, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFormValidacion } from '@/hooks/useFormValidacion';
 import { extractMessage } from '@/lib/errors';
 import { minLongitud, requerido, soloNumeros } from '@/lib/validacion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LogoMarca } from '@/components/layout/LogoMarca';
+import { IMAGES } from '@/config/images';
 
 export const LoginPage = () => {
   const { login } = useAuth();
@@ -41,110 +42,63 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
-      <div className="absolute -left-32 top-[-10%] h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
-      <div className="absolute -right-32 bottom-[-10%] h-80 w-80 rounded-full bg-indigo-400/10 blur-3xl" />
-      <div className="relative mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-2">
-        <div className="hidden flex-col justify-between p-10 lg:flex">
+    <main className="grid min-h-screen bg-background lg:grid-cols-2">
+      <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-10">
+        <div className="w-full max-w-md space-y-9">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <GraduationCap className="h-5 w-5" />
-            </div>
+            <LogoMarca loading="eager" />
             <div>
-              <p className="text-lg font-semibold tracking-tight">Sistema Escolar</p>
+              <p className="font-semibold tracking-tight">Sistema Escolar</p>
               <p className="text-sm text-muted-foreground">Gestión académica integral</p>
             </div>
           </div>
-          <div className="space-y-4">
-            <h1 className="text-4xl font-semibold tracking-tight xl:text-5xl">
-              Todo el control escolar en un solo lugar
-            </h1>
-            <p className="max-w-md text-lg text-muted-foreground">
-              Administra estudiantes, asistencia, calificaciones, citaciones y seguimiento familiar con una experiencia moderna y clara.
-            </p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-primary">Bienvenido de nuevo</p>
+            <h1 className="text-3xl font-semibold tracking-tight">Inicia sesión</h1>
+            <p className="text-muted-foreground">Ingresa con tu carnet y contraseña para acceder al sistema.</p>
           </div>
-          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Sistema Escolar</p>
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {error && <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
+            <div className="space-y-2">
+              <Label htmlFor="ci">Carnet de identidad</Label>
+              <div className="relative">
+                <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input id="ci" inputMode="numeric" autoComplete="username" value={form.valores.ci}
+                  onChange={(e) => form.setCampo('ci', e.target.value.replace(/\D/g, ''))} onBlur={form.onBlur('ci')}
+                  placeholder="Ingresa tu número de carnet" aria-invalid={!!form.errorDe('ci')} className="pl-9" />
+              </div>
+              {form.errorDe('ci') && <p role="alert" className="text-xs font-medium text-destructive">{form.errorDe('ci')}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <div className="relative">
+                <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input id="password" type={verPassword ? 'text' : 'password'} inputMode="numeric" autoComplete="current-password"
+                  value={form.valores.password} onChange={(e) => form.setCampo('password', e.target.value.replace(/\D/g, ''))}
+                  onBlur={form.onBlur('password')} placeholder="Ingresa tu contraseña" aria-invalid={!!form.errorDe('password')} className="pl-9 pr-9" />
+                <button type="button" onClick={() => setVerPassword((v) => !v)} aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  className="absolute right-2 top-2 rounded-md p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+                  {verPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {form.errorDe('password') && <p role="alert" className="text-xs font-medium text-destructive">{form.errorDe('password')}</p>}
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Ingresando...</> : 'Ingresar'}
+            </Button>
+          </form>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Sistema Escolar</p>
         </div>
-        <div className="flex items-center justify-center p-4 sm:p-6">
-          <Card className="w-full max-w-md border-border/60 shadow-xl shadow-black/5">
-            <CardHeader className="space-y-2 text-center">
-              <CardTitle className="text-2xl font-semibold tracking-tight">Iniciar sesión</CardTitle>
-              <CardDescription>Ingresa con tu CI y contraseña para acceder al sistema</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                {error ? (
-                  <div
-                    role="alert"
-                    className="animate-in fade-in slide-in-from-top-1 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive duration-200"
-                  >
-                    {error}
-                  </div>
-                ) : null}
-                <div className="space-y-2">
-                  <Label htmlFor="ci">CI</Label>
-                  <div className="relative">
-                    <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="ci"
-                      inputMode="numeric"
-                      autoComplete="username"
-                      value={form.valores.ci}
-                      onChange={(e) => form.setCampo('ci', e.target.value)}
-                      onBlur={form.onBlur('ci')}
-                      placeholder="Ingresa tu número de carnet"
-                      aria-invalid={!!form.errorDe('ci')}
-                      className="pl-9"
-                    />
-                  </div>
-                  {form.errorDe('ci') && (
-                    <p role="alert" className="text-xs font-medium text-destructive">{form.errorDe('ci')}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={verPassword ? 'text' : 'password'}
-                      autoComplete="current-password"
-                      value={form.valores.password}
-                      onChange={(e) => form.setCampo('password', e.target.value)}
-                      onBlur={form.onBlur('password')}
-                      placeholder="Ingresa tu contraseña"
-                      aria-invalid={!!form.errorDe('password')}
-                      className="pl-9 pr-9"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setVerPassword((v) => !v)}
-                      aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                      className="absolute right-2 top-2 rounded-md p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                    >
-                      {verPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {form.errorDe('password') && (
-                    <p role="alert" className="text-xs font-medium text-destructive">{form.errorDe('password')}</p>
-                  )}
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Ingresando...
-                    </>
-                  ) : (
-                    "Ingresar"
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+      </section>
+      <aside className="relative hidden min-h-screen overflow-hidden bg-indigo-950 lg:block">
+        <img src={IMAGES.login} alt="Estudiantes ingresando al edificio de una institución educativa" width={1920} height={1280} loading="eager"
+          className="absolute inset-0 size-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-indigo-950/25" />
+        <div className="absolute inset-x-0 bottom-0 p-10 text-white xl:p-16">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-indigo-100">Sistema Escolar</p>
+          <h2 className="max-w-xl text-4xl font-semibold leading-tight tracking-tight xl:text-5xl">Cada comunidad educativa, conectada.</h2>
         </div>
-      </div>
-    </div>
+      </aside>
+    </main>
   );
 };

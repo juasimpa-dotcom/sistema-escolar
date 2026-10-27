@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EstadoGenerico;
+use App\Enums\NivelEducativo;
 use App\Enums\Turno;
 use App\Models\Concerns\BelongsToUnidadEducativa;
 use Database\Factories\AulaFactory;
@@ -23,6 +24,7 @@ class Aula extends Model
         'grado',
         'paralelo',
         'turno',
+        'nivel',
         'estado',
     ];
 
@@ -30,6 +32,7 @@ class Aula extends Model
     {
         return [
             'turno' => Turno::class,
+            'nivel' => NivelEducativo::class,
             'estado' => EstadoGenerico::class,
         ];
     }

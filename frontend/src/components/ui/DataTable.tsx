@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './skeleton';
+import { EmptyState } from './EmptyState';
 
 export interface DataTableColumn<T> {
   key: string;
@@ -110,7 +111,7 @@ export function DataTable<T>({
             {mostrarVacio && (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-2">
-                  {empty}
+                  {empty ?? <EmptyState title="No hay registros" description="Cuando haya información disponible, aparecerá aquí." compact />}
                 </td>
               </tr>
             )}

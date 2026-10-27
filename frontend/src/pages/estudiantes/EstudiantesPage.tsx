@@ -256,7 +256,7 @@ export const EstudiantesPage = () => {
                   required
                   inputMode="numeric"
                   value={form.valores.estudiante.ci}
-                  onChange={(e) => form.setCampo('estudiante.ci', e.target.value)}
+                  onChange={(e) => form.setCampo('estudiante.ci', e.target.value.replace(/\D/g, ''))}
                   onBlur={form.onBlur('estudiante.ci')}
                   error={form.errorDe('estudiante.ci')}
                   valido={!!form.valores.estudiante.ci && !form.errores['estudiante.ci']}
@@ -350,7 +350,7 @@ export const EstudiantesPage = () => {
                     required
                     inputMode="numeric"
                     value={form.valores.padre_nuevo.ci}
-                    onChange={(e) => form.setCampo('padre_nuevo.ci', e.target.value)}
+                    onChange={(e) => form.setCampo('padre_nuevo.ci', e.target.value.replace(/\D/g, ''))}
                     onBlur={form.onBlur('padre_nuevo.ci')}
                     error={form.errorDe('padre_nuevo.ci')}
                   />

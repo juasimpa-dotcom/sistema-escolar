@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use App\Enums\EstadoLicencia;
+use App\Enums\EstadoUsuario;
+use App\Enums\Rol;
 use App\Models\Estudiante;
 use App\Models\Licencia;
 use App\Models\User;
 use App\Notifications\LicenciaResuelta;
+use App\Notifications\LicenciaSolicitada;
 use Illuminate\Validation\ValidationException;
 
 class LicenciaService
@@ -32,7 +35,7 @@ class LicenciaService
             ]);
         }
 
-        return Licencia::create([
+        $licencia = Licencia::create([
             'estudiante_id' => $estudiante->id,
             'padre_id' => $padre->id,
             'fecha_inicio' => $datos['fecha_inicio'],
@@ -40,6 +43,10 @@ class LicenciaService
             'motivo' => $datos['motivo'],
             'estado' => EstadoLicencia::PENDIENTE,
         ]);
+
+        $this->notificarSolicitud($licencia->load(['estudiante.user', 'padre']));
+
+        return $licencia;
     }
 
     public function aprobar(Licencia $licencia, User $director): Licencia
@@ -87,6 +94,22 @@ class LicenciaService
         if ($padre !== null) {
             $padre->notify(new LicenciaResuelta($licencia->load('estudiante.user')));
         }
+    }
+
+    private function notificarSolicitud(Licencia $licencia): void
+    {
+        $unidadId = $licencia->estudiante?->unidad_educativa_id;
+
+        if ($unidadId === null) {
+            return;
+        }
+
+        User::query()
+            ->where('unidad_educativa_id', $unidadId)
+            ->where('rol', Rol::DIRECTOR->value)
+            ->where('estado', EstadoUsuario::ACTIVO->value)
+            ->get()
+            ->each(fn (User $director) => $director->notify(new LicenciaSolicitada($licencia)));
     }
 
     private function assertPendiente(Licencia $licencia): void

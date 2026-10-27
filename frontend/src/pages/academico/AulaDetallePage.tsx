@@ -388,7 +388,7 @@ const TabHorario = ({ aulaId }: { aulaId: number }) => {
                     </Button>
                   </div>
                 ))}
-                {porDia(d.value).length === 0 && <div className="text-xs text-muted-foreground">Sin clases</div>}
+                {porDia(d.value).length === 0 && <EmptyState title="Sin clases" compact className="border-0 bg-transparent px-0" />}
               </div>
             </div>
           ))}

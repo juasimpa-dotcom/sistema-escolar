@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Actividad;
 use App\Models\AulaMateria;
+use App\Models\Periodo;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -15,6 +16,7 @@ class ActividadFactory extends Factory
     {
         return [
             'aula_materia_id' => AulaMateria::factory(),
+            'periodo_id' => null,
             'titulo' => fake()->randomElement([
                 'Tarea 1',
                 'Examen parcial',
@@ -27,5 +29,12 @@ class ActividadFactory extends Factory
             'fecha_limite_notas' => fake()->dateTimeBetween('+1 week', '+3 weeks')->format('Y-m-d'),
             'puntaje_maximo' => fake()->randomElement([20, 50, 100]),
         ];
+    }
+
+    public function enPeriodo(): static
+    {
+        return $this->state(fn () => [
+            'periodo_id' => Periodo::factory(),
+        ]);
     }
 }

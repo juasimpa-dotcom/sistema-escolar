@@ -5,18 +5,22 @@ use App\Http\Controllers\Api\V1\AsistenciaController;
 use App\Http\Controllers\Api\V1\AulaController;
 use App\Http\Controllers\Api\V1\AulaMateriaController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\CatalogoController;
 use App\Http\Controllers\Api\V1\CitacionController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\DistritoMunicipalController;
 use App\Http\Controllers\Api\V1\EstudianteController;
 use App\Http\Controllers\Api\V1\GestionController;
 use App\Http\Controllers\Api\V1\HorarioController;
 use App\Http\Controllers\Api\V1\InscripcionController;
 use App\Http\Controllers\Api\V1\LicenciaController;
+use App\Http\Controllers\Api\V1\MacrodistritoController;
 use App\Http\Controllers\Api\V1\MateriaController;
 use App\Http\Controllers\Api\V1\NotaController;
 use App\Http\Controllers\Api\V1\NotificacionController;
 use App\Http\Controllers\Api\V1\PersonaController;
 use App\Http\Controllers\Api\V1\PortalController;
+use App\Http\Controllers\Api\V1\ReportesController;
 use App\Http\Controllers\Api\V1\UnidadEducativaController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +42,28 @@ Route::prefix('v1')->group(function () {
         Route::get('unidades/{unidad}', [UnidadEducativaController::class, 'show']);
         Route::put('unidades/{unidad}', [UnidadEducativaController::class, 'update']);
         Route::post('unidades/{unidad}/baja', [UnidadEducativaController::class, 'darDeBaja']);
+
+        // Catálogos geográficos (filtros de dashboard y reportes)
+        Route::get('catalogos/macrodistritos', [CatalogoController::class, 'macrodistritos']);
+        Route::get('catalogos/distritos', [CatalogoController::class, 'distritos']);
+        Route::get('unidades-educativas', [CatalogoController::class, 'unidadesEducativas']);
+        Route::get('catalogos/gestiones', [CatalogoController::class, 'gestiones']);
+        Route::get('catalogos/aulas', [CatalogoController::class, 'aulas']);
+        Route::get('catalogos/estudiantes', [CatalogoController::class, 'estudiantes']);
+        Route::get('catalogos/periodos', [CatalogoController::class, 'periodos']);
+
+        // Catálogo territorial (Solo Superadmin)
+        Route::get('macrodistritos', [MacrodistritoController::class, 'index']);
+        Route::post('macrodistritos', [MacrodistritoController::class, 'store']);
+        Route::get('macrodistritos/{macrodistrito}', [MacrodistritoController::class, 'show']);
+        Route::put('macrodistritos/{macrodistrito}', [MacrodistritoController::class, 'update']);
+        Route::delete('macrodistritos/{macrodistrito}', [MacrodistritoController::class, 'destroy']);
+
+        Route::get('distritos', [DistritoMunicipalController::class, 'index']);
+        Route::post('distritos', [DistritoMunicipalController::class, 'store']);
+        Route::get('distritos/{distrito}', [DistritoMunicipalController::class, 'show']);
+        Route::put('distritos/{distrito}', [DistritoMunicipalController::class, 'update']);
+        Route::delete('distritos/{distrito}', [DistritoMunicipalController::class, 'destroy']);
 
         // Personas: profesores, administrativos y padres
         Route::get('personas', [PersonaController::class, 'index']);
@@ -131,8 +157,15 @@ Route::prefix('v1')->group(function () {
         Route::post('citaciones/{citacion}/marcar-vista', [CitacionController::class, 'marcarVista']);
         Route::delete('citaciones/{citacion}', [CitacionController::class, 'destroy']);
 
-        // Dashboard
+        // Dashboard (tablero por rol y resumen histórico)
+        Route::get('dashboard', [DashboardController::class, 'tablero']);
         Route::get('dashboard/resumen', [DashboardController::class, 'resumen']);
+
+        // Reportes: preview y exportación usan el mismo servicio de consulta.
+        Route::get('reportes', [ReportesController::class, 'catalogo']);
+        Route::get('reportes/{slug}/preview', [ReportesController::class, 'preview']);
+        Route::get('reportes/{slug}/exportar/{formato}', [ReportesController::class, 'exportar']);
+        Route::post('reportes/registros/{tipo}', [ReportesController::class, 'registrar']);
 
         // Portal de familia y estudiante
         Route::prefix('portal')->group(function () {

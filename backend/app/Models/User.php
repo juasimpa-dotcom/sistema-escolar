@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EstadoUsuario;
 use App\Enums\Rol;
+use App\Enums\Sexo;
 use App\Models\Concerns\BelongsToUnidadEducativa;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,6 +31,7 @@ class User extends Authenticatable
         'apellidos',
         'email',
         'telefono',
+        'sexo',
         'password',
         'debe_cambiar_password',
         'estado',
@@ -47,6 +49,7 @@ class User extends Authenticatable
         return [
             'rol' => Rol::class,
             'estado' => EstadoUsuario::class,
+            'sexo' => Sexo::class,
             'debe_cambiar_password' => 'boolean',
             'password' => 'hashed',
             'fecha_baja' => 'date',
@@ -88,6 +91,16 @@ class User extends Authenticatable
     public function licenciasSolicitadas(): HasMany
     {
         return $this->hasMany(Licencia::class, 'padre_id');
+    }
+
+    public function asistenciaDocente(): HasMany
+    {
+        return $this->hasMany(AsistenciaDocente::class, 'profesor_id');
+    }
+
+    public function plazasDocentes(): HasMany
+    {
+        return $this->hasMany(PlazaDocente::class, 'profesor_id');
     }
 
     public function nombreCompleto(): string

@@ -1,12 +1,12 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
-import type { Estudiante, FiltrosBase, Paginado, Persona, Unidad } from '../types/gestion';
+import type { Estudiante, FiltrosBase, FiltrosUnidades, Paginado, Persona, Unidad } from '../types/gestion';
 const limpiar = (params: object): Record<string, unknown> =>
   Object.fromEntries(
     Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '' && v !== false)
   );
 
-export const useUnidades = (filtros: FiltrosBase) =>
+export const useUnidades = (filtros: FiltrosUnidades) =>
   useQuery({
     queryKey: ['unidades', filtros],
     queryFn: async () => {

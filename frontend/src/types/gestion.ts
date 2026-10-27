@@ -56,15 +56,42 @@ export interface Estudiante {
   padres?: Padre[];
 }
 
+export type TipoUnidad = 'fiscal' | 'convenio' | 'privada';
+export type TipoMacrodistrito = 'urbano' | 'rural';
+
+export interface Macrodistrito {
+  id: number;
+  municipio_id: number;
+  codigo: string;
+  nombre: string;
+  tipo: TipoMacrodistrito;
+  distritos_municipales_count?: number;
+  unidades_educativas_count?: number;
+}
+
+export interface DistritoMunicipal {
+  id: number;
+  macrodistrito_id: number | null;
+  numero: number;
+  nombre: string | null;
+  macrodistrito?: Pick<Macrodistrito, 'id' | 'codigo' | 'nombre' | 'tipo'> | null;
+}
+
 export interface Unidad {
   id: number;
   nombre: string;
   codigo: string;
   direccion: string | null;
+  zona: string | null;
+  macrodistrito_id: number | null;
+  distrito_municipal_id: number | null;
+  tipo: TipoUnidad;
   telefono: string | null;
   estado: EstadoUnidad;
   fecha_baja: string | null;
   motivo_baja: string | null;
+  macrodistrito: Pick<Macrodistrito, 'id' | 'codigo' | 'nombre' | 'tipo'> | null;
+  distrito: { id: number; numero: number; nombre: string | null; macrodistrito_id: number | null } | null;
   director: {
     id: number;
     ci: string;
@@ -81,4 +108,15 @@ export interface FiltrosBase {
   por_pagina?: number;
   page?: number;
   incluir_baja?: boolean;
+}
+
+export interface FiltrosUnidades extends FiltrosBase {
+  macrodistrito_id?: number | string;
+  distrito_municipal_id?: number | string;
+  tipo?: TipoUnidad | '';
+}
+
+export interface FiltrosCatalogo extends FiltrosBase {
+  macrodistrito_id?: number | string;
+  tipo?: string;
 }

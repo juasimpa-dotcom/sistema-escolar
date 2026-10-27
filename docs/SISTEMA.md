@@ -2,9 +2,8 @@
 
 Documentación técnica y funcional del sistema implementado en este repositorio.
 
-> **Estado**: implementación completa y verificada (backend + frontend).
-> **Fecha de referencia**: 22 de octubre de 2026.
-> **Alcance de esta versión**: 6 roles, 15 módulos funcionales, 20 tablas de dominio, 65 pruebas automatizadas.
+> **Fecha de actualización**: 26 de octubre de 2026.
+> **Alcance documentado**: seis roles, API multi-unidad, SPA, catálogos territoriales, reportes y acceso de desarrollo desde la red local.
 
 ---
 
@@ -24,6 +23,8 @@ El **Sistema Escolar Multi-Unidad** es una aplicación web para administrar esta
 - panel de indicadores con caché;
 - portal de familia y estudiante;
 - notificaciones internas.
+- informes para Superadmin y Director con filtros, vista previa, gráficos y exportación PDF/Excel;
+- registro de asistencia docente, avance curricular, eventos de ficha y resultados finales de inscripción.
 
 La arquitectura es **API REST + SPA**: Laravel expone `/api/v1`, React consume la API con token Bearer y renderiza vistas por rol.
 
@@ -100,6 +101,8 @@ La arquitectura es **API REST + SPA**: Laravel expone `/api/v1`, React consume l
 | Pruebas | PHPUnit `^11.5.50` |
 | Estilo | Laravel Pint |
 | Utilidades | Pail, Sail, Collision, Faker, Mockery, Tinker |
+| Exportación PDF | `barryvdh/laravel-dompdf` |
+| Exportación Excel | `maatwebsite/excel` |
 
 ### Frontend
 
@@ -133,24 +136,19 @@ backend/
 ├── app/
 │   ├── Enums/                 # 13 enums de dominio
 │   ├── Http/
-│   │   ├── Controllers/Api/V1/
-│   │   │   ├── Administrativo/    # aulas, horarios, inscripciones, materias
-│   │   │   ├── Auth/              # login, me, logout, cambio de contraseña
-│   │   │   ├── Director/          # dashboard
-│   │   │   ├── Familia/           # portal, licencias, citaciones, notificaciones
-│   │   │   ├── Profesor/          # notas, asistencias
-│   │   │   └── Superadmin/        # unidades educativas
+│   │   ├── Controllers/Api/V1/    # recursos, reportes y catálogos
 │   │   ├── Middleware/            # SetTenant, EnsureRole
 │   │   └── Requests/              # validación de entrada
-│   ├── Models/                    # 16 modelos + Concerns
+│   ├── Models/                    # modelos de identidad, académico, territorio y reportes
 │   ├── Notifications/             # LicenciaResuelta, CitacionRecibida
 │   ├── Observers/                 # DashboardCacheObserver
-│   ├── Policies/                  # 12 policies
+│   ├── Policies/                  # incluye autorización de reportes
 │   ├── Providers/
-│   ├── Services/                  # 11 servicios de negocio
+│   ├── Services/                  # lógica de negocio y ReporteService
+│   ├── Exports/                   # exportación Excel
 │   └── Support/TenantContext.php
 ├── bootstrap/app.php              # middleware, aliases, rutas
-├── database/migrations/           # 21 migraciones
+├── database/migrations/           # académicas, territoriales y de reportes
 ├── database/seeders/              # SuperadminSeeder, DemoSeeder
 ├── routes/api.php                 # catálogo API v1
 └── tests/                         # Feature + Unit
@@ -181,7 +179,7 @@ Esto permite que un mismo controlador funcione para superadmin (global) y para u
 
 ### 4.4 Autorización
 
-- 12 policies: `Actividad`, `Asistencia`, `Aula`, `Citacion`, `Estudiante`, `Gestion`, `Inscripcion`, `Licencia`, `Materia`, `Nota`, `UnidadEducativa`, `User`.
+- Policies por recurso, incluyendo `ReportePolicy`: `Reporte::paraRol()` arma el catálogo visible y `ver`/`exportar` vuelven a autorizar cada operación.
 - Regla transversal: el superadmin puede todo; los demás roles quedan acotados a su unidad y, cuando aplica, a sus propios recursos (hijos, materias asignadas, citaciones emitidas/recibidas).
 
 ### 4.5 Validación y errores
@@ -240,11 +238,13 @@ frontend/src/
 
 `src/api/axios.ts`:
 
-- `baseURL = VITE_API_URL` (por defecto `http://localhost:8000/api/v1`).
+- Es el único punto de configuración de la base URL. Usa `VITE_API_URL` si está definido; en desarrollo toma el protocolo y hostname del navegador y usa el puerto `8000` (`http(s)://<hostname>:8000/api/v1`). Así, al abrir el frontend desde otro equipo de la LAN, las peticiones llegan a la PC servidor.
 - Adjunta `Authorization: Bearer <token>` desde `localStorage`.
 - **Aplana la paginación** de Laravel: de `{ data, links, meta }` a `{ data, total, ... }` para simplificar las tablas.
 - Ante 401 limpia el token y redirige al login.
-- `withCredentials: true` habilitado.
+- No envía cookies de sesión (`withCredentials` desactivado); la SPA autentica con tokens Bearer de Sanctum.
+
+Vite escucha en todas las interfaces (`server.host: true`, puerto `5173`). En desarrollo, `VITE_API_URL` no se define; en producción sirve como override si API y frontend usan orígenes distintos.
 
 ### 5.4 Estado y datos
 
@@ -265,22 +265,25 @@ frontend/src/
 
 ## 6. Modelo de datos
 
-20 tablas de dominio (más tablas de infraestructura de Laravel).
+Las tablas principales de dominio cubren identidad, estructura académica, comunicación, territorio y datos complementarios de reportes (además de las tablas de infraestructura de Laravel).
 
 ### 6.1 Identidad y estructura
 
 | Tabla | Propósito | Campos clave |
 |---|---|---|
-| `unidades_educativas` | Establecimientos | `nombre`, `codigo` único, `estado`, baja lógica |
-| `users` | Todas las personas con acceso | `rol`, `ci` único, `usuario` único, `email`, `password`, `debe_cambiar_password`, `unidad_educativa_id` |
+| `unidades_educativas` | Establecimientos | `nombre`, `codigo` único, `macrodistrito_id`, `distrito_municipal_id`, `tipo`, `estado` |
+| `users` | Todas las personas con acceso | `rol`, `ci` único, `usuario` único, `email`, `sexo`, `password`, `debe_cambiar_password`, `unidad_educativa_id` |
 | `estudiantes` | Perfil académico del estudiante | `user_id` único, `unidad_educativa_id`, `fecha_nacimiento`, `estado` |
 | `padre_estudiante` | Vínculo tutor–estudiante | `padre_id`, `estudiante_id`, `parentesco`; único por par |
 | `gestiones` | Año escolar | `anio`, `es_actual`, `estado`; único por unidad+año |
-| `aulas` | Curso/grado/paralelo | `gestion_id`, `grado`, `paralelo`, `turno`, `estado`; único por gestión+grado+paralelo+turno |
+| `aulas` | Curso/grado/paralelo | `gestion_id`, `grado`, `paralelo`, `nivel`, `turno`, `estado`; único por gestión+grado+paralelo+turno |
 | `materias` | Materias de la unidad | `nombre`, `estado`; único por unidad+nombre |
 | `aula_materia` | Asignación materia–aula–profesor | `aula_id`, `materia_id`, `profesor_id`; único aula+materia |
-| `inscripciones` | Matrícula del estudiante en un aula | `estudiante_id`, `aula_id`, `gestion_id`, `estado`; único estudiante+gestión |
+| `inscripciones` | Matrícula y resultado final | `estudiante_id`, `aula_id`, `gestion_id`, `estado`, `resultado_final`, `promedio_final`; único estudiante+gestión |
 | `horarios` | Bloque semanal de una materia-aula | `aula_materia_id`, `dia`, `hora_inicio`, `hora_fin` |
+| `municipios` | Municipio que agrupa macrodistritos | `nombre` |
+| `macrodistritos` | División territorial superior | `codigo`, `nombre`, `tipo` |
+| `distritos_municipales` | Distrito dentro de un macrodistrito | `macrodistrito_id`, `numero`, `nombre` |
 
 ### 6.2 Evaluación y asistencia
 
@@ -292,6 +295,13 @@ frontend/src/
 | `asistencias` | Asistencia diaria por materia-aula | `fecha`, `estado` (`presente`, `falta`, `licencia`, `atraso`), `registrado_por`; único materia-aula+estudiante+fecha |
 | `asistencia_historial` | Auditoría de cambios | `estado_anterior`, `estado_nuevo`, `usuario_id` |
 | `licencias` | Solicitud de ausencia justificada | `fecha_inicio`, `fecha_fin`, `motivo`, `estado`, `resuelto_por`, `motivo_rechazo` |
+| `periodos` | Periodos académicos de una gestión | `gestion_id`, `nombre`, `tipo`, fechas |
+| `plazas_docentes` | Plazas por unidad y materia | `nivel`, `estado`, `profesor_id` |
+| `asistencia_docente` | Registro manual diario del personal | `profesor_id`, `fecha`, `estado`, `hora_ingreso` |
+| `ficha_estudiante_eventos` | Eventos académicos, disciplinarios y de salud | `estudiante_id`, `tipo`, `fecha`, `descripcion` |
+| `avance_curricular` | Planificación y clases programadas/dictadas | `aula_materia_id`, `periodo_id`, contadores |
+
+También se añadieron campos territoriales a `unidades_educativas`, `sexo` a usuarios, `nivel` a aulas y `resultado_final`, `promedio_final` y `fecha_resultado` a inscripciones. Los eventos de salud de la ficha se limitan a los reportes del Director.
 
 ### 6.3 Comunicación
 
@@ -306,6 +316,7 @@ frontend/src/
 - [ER académico y de comunicación](diagramas/er-academico.html) — actividades, notas, asistencias, licencias, citaciones, historiales.
 
 > Los ER son **parciales por legibilidad**: muestran las relaciones principales y omiten algunas claves foráneas secundarias. El diccionario completo está en las tablas de arriba.
+> Los HTML de ER representan el esquema académico e identidad original; para territorio, periodos y nuevas entidades de reportes, usa este diccionario y las migraciones actuales.
 
 ---
 
@@ -434,10 +445,17 @@ El controlador valida acceso con `EstudiantePolicy`; el servicio solo arma la vi
 
 ### 7.15 Reportes y consultas
 
-- Planillas de notas y asistencias.
-- Historiales de corrección.
-- Dashboard agregado.
-- Portal con promedios y pendientes.
+- Página `/reportes` para Superadmin y Director, con tarjetas por reporte, filtros, vista previa paginada, tabla y gráficos Recharts.
+- Los botones **Exportar PDF** y **Exportar Excel** se habilitan tras generar la vista previa. PDF usa DomPDF; Excel usa Laravel Excel. Los formatos llaman al mismo `ReporteService` que construye las consultas de preview.
+- Filtros territoriales para Superadmin: macrodistrito, distrito, unidad y tipo. Nivel, gestión, sexo, rango de fechas y agrupación se muestran según el reporte. Los catálogos cargan con React Query; los selectores dependientes reinician los valores subordinados.
+- Director solo consulta información de su unidad. No se le muestran filtros territoriales. La ficha acumulativa contiene eventos académicos, disciplinarios y de salud; el acceso a salud está reservado al Director.
+- Catálogo municipal: matrícula consolidada, proyección histórica, disponibilidad docente, ausentismo, deserción/reprobación, rendimiento, distribución por sexo y evolución de asistencia.
+- Catálogo de unidad: asistencia y puntualidad, ficha del estudiante, boletas, riesgo pedagógico, avance curricular, asistencia docente, estadísticas finales, distribución por sexo y evolución de asistencia.
+- El Director puede registrar asistencia docente, avance curricular, eventos de ficha y resultados finales de inscripción mediante `POST /reportes/registros/{tipo}`.
+- Los catálogos usados por filtros incluyen macrodistritos, distritos, unidades educativas, gestiones, aulas, estudiantes y periodos. Los selectores muestran etiquetas legibles; envían IDs al API.
+- Los eventos de salud de la ficha se restringen al Director.
+
+**Alcance pendiente:** la proyección todavía no incorpora una gestión futura calculada; la ficha no unifica aún notas y asistencias, y las boletas PDF masivas todavía no generan una boleta por página. Revisar estos reportes antes de usarlos como documentos oficiales.
 
 ---
 
@@ -460,6 +478,7 @@ Resumen de las reglas implementadas en policies. `—` = sin acceso; `U` = solo 
 | Licencias | Total | U (resolver) | U (ver) | — | P (crear/ver/anular) | — |
 | Citaciones | Total | U (crear/ver/anular) | U (crear/ver/anular) | P (ver) | P (ver) | — |
 | Dashboard | Global | U | U | — | — | — |
+| Reportes | Todos los reportes municipales | Solo su unidad; incluye salud en ficha | — | — | — | — |
 | Portal | — | — | — | — | P | P |
 
 > El detalle exacto por acción está en `backend/app/Policies`.
@@ -605,8 +624,36 @@ Base: `/api/v1`. Todas las rutas salvo `login` requieren `Authorization: Bearer 
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/dashboard/resumen` | Indicadores con filtros |
+| GET | `/dashboard` | Tablero por rol |
 | GET | `/portal/mi-perfil` | Portal del estudiante autenticado |
 | GET | `/portal/hijo/{estudiante}` | Portal de un hijo (padre) |
+
+### Catálogos de filtros
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/catalogos/macrodistritos` | Catálogo liviano con código y nombre |
+| GET | `/catalogos/distritos?macrodistrito_id={id}` | Distritos filtrados por macrodistrito |
+| GET | `/unidades-educativas?macrodistrito_id={id}&distrito_id={id}` | Unidades livianas para el combobox municipal |
+| GET | `/catalogos/gestiones` | Gestiones existentes para seleccionar |
+| GET | `/catalogos/aulas` | Aulas visibles para el tenant |
+| GET | `/catalogos/estudiantes` | Estudiantes visibles para el tenant |
+| GET | `/catalogos/periodos` | Periodos visibles para el tenant |
+
+### Reportes
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/reportes` | Catálogo disponible para el rol autenticado |
+| GET | `/reportes/{slug}/preview` | JSON paginado, filtros aplicados y datos agregados para gráficos |
+| GET | `/reportes/{slug}/exportar/pdf` | Descarga PDF con encabezado y datos filtrados |
+| GET | `/reportes/{slug}/exportar/excel` | Descarga Excel con datos filtrados |
+| POST | `/reportes/registros/asistencia-docente` | Alta/actualización del registro diario docente |
+| POST | `/reportes/registros/avance-curricular` | Alta/actualización de avance por materia y periodo |
+| POST | `/reportes/registros/ficha-estudiante` | Registro de evento académico, disciplinario o salud |
+| POST | `/reportes/registros/resultado-inscripcion` | Resultado promovido, reprobado o abandono |
+
+Solo los reportes de Director aceptan salud en ficha. El backend vuelve a autorizar cada preview, exportación y registro; ocultar un filtro en la SPA no sustituye esta autorización.
 
 ---
 
@@ -688,7 +735,7 @@ cp .env.example .env
 php artisan key:generate
 # configurar DB_* en .env
 php artisan migrate --seed
-php artisan serve
+php artisan serve --host=0.0.0.0 --port=8000
 ```
 
 `php artisan migrate --seed` ejecuta `DatabaseSeeder`, que llama a `SuperadminSeeder` y `DemoSeeder`.
@@ -698,21 +745,43 @@ php artisan serve
 ```bash
 cd frontend
 npm install
-# crear .env con VITE_API_URL=http://localhost:8000/api/v1
+# En desarrollo deja VITE_API_URL sin definir; se usa el hostname del navegador.
 npm run dev
 ```
 
-### 12.4 Variables relevantes
+### 12.4 Acceso desde la red local (Windows/CMD)
+
+Inicia el backend y Vite en dos ventanas CMD independientes:
+
+```cmd
+cd /d C:\Proyectos\sistema-escolar\backend
+php artisan config:clear
+php artisan cache:clear
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+```cmd
+cd /d C:\Proyectos\sistema-escolar\frontend
+npm run dev -- --host 0.0.0.0
+```
+
+Desde otro dispositivo de la red abre primero `http://<IP-LAN-servidor>:8000/api/v1/auth/login`. Una respuesta `405 Method Not Allowed` al abrir con GET confirma que se alcanzó Laravel. Luego abre `http://<IP-LAN-servidor>:5173`; si no conecta, permite TCP `8000` y `5173` en el firewall de Windows.
+
+La base URL del API tiene un único punto de configuración: `frontend/src/api/axios.ts`. Usa `VITE_API_URL` cuando se define; si no, deriva protocolo y hostname de la página y agrega `:8000/api/v1`.
+
+### 12.5 Variables relevantes
 
 | Variable | Uso |
 |---|---|
 | `APP_URL` | URL del backend |
 | `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | Conexión a base de datos |
-| `FRONTEND_URL` | Origen permitido para CORS/stateful |
+| `FRONTEND_URL` | Origen exacto permitido por CORS en producción |
 | `SESSION_DRIVER`, `CACHE_STORE`, `QUEUE_CONNECTION` | Infraestructura Laravel |
-| `VITE_API_URL` (frontend) | Base de la API |
+| `VITE_API_URL` (frontend) | Override opcional para producción; no definir en desarrollo LAN |
 
-### 12.5 Credenciales demo
+En desarrollo, CORS permite cualquier origen con `supports_credentials=false`. En producción se restringe a `FRONTEND_URL`. La API autentica con tokens Bearer de Sanctum, no con cookies de sesión; el grupo API no usa `EnsureFrontendRequestsAreStateful` y `bootstrap/app.php` no registra un segundo middleware CORS.
+
+### 12.6 Credenciales demo
 
 | Rol | CI | Contraseña |
 |---|---|---|
@@ -731,11 +800,10 @@ npm run dev
 
 ## 13. Pruebas y calidad
 
-- **Backend**: `php artisan test` → **65 pruebas, 191 aserciones**, todas en verde.
-- Cobertura funcional por módulo: autenticación, aislamiento multi-tenant, personas/estudiantes, gestión académica, inscripciones, actividades/notas, asistencias, licencias, citaciones, dashboard y portal.
-- Base de pruebas: SQLite en memoria; caché en array.
-- **Frontend**: `npm run build` (TypeScript + Vite) y `npm run lint` (Oxlint) sin errores.
-- No hay pruebas unitarias de componentes frontend en esta versión.
+- Ejecutar `php artisan test` en backend para obtener el resultado actualizado de PHPUnit; la cantidad de casos cambia con las nuevas funciones y no se fija aquí.
+- Base de pruebas configurada para SQLite en memoria y caché en array.
+- Frontend: `npm run build` ejecuta TypeScript y Vite; `npm run lint` ejecuta Oxlint.
+- No hay pruebas E2E de navegador documentadas.
 
 Comandos:
 
@@ -817,7 +885,7 @@ sistema-escolar/
 - No hay pruebas de componentes frontend ni E2E de navegador.
 - No hay CI/CD ni contenedores de despliegue en el repositorio.
 - El dashboard agrega en vivo sobre PostgreSQL; para volúmenes muy grandes convendría una tabla de agregados.
-- Los reportes son consultas en pantalla; no hay exportación PDF/Excel.
+- El módulo de reportes ya incluye exportaciones PDF/Excel, pero conserva limitaciones funcionales: falta la proyección calculada de demanda para la gestión siguiente, la ficha acumulativa aún no unifica todos los datos académicos y de asistencia, y las boletas masivas no generan una página por estudiante.
 - La asistencia es por materia-aula y fecha, no por bloque horario.
 
 ### Siguientes pasos sugeridos

@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests\UnidadEducativa;
 
+use App\Enums\TipoUnidad;
 use App\Models\UnidadEducativa;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\Exists;
 
 class StoreUnidadEducativaRequest extends FormRequest
 {
@@ -19,6 +22,10 @@ class StoreUnidadEducativaRequest extends FormRequest
             'nombre' => ['required', 'string', 'max:255'],
             'codigo' => ['required', 'string', 'max:50', 'unique:unidades_educativas,codigo'],
             'direccion' => ['nullable', 'string', 'max:255'],
+            'zona' => ['nullable', 'string', 'max:255'],
+            'macrodistrito_id' => ['nullable', 'integer', Rule::exists('macrodistritos', 'id')],
+            'distrito_municipal_id' => ['nullable', 'integer', $this->reglaDistrito()],
+            'tipo' => ['nullable', new Enum(TipoUnidad::class)],
             'telefono' => ['nullable', 'string', 'max:30'],
             'director' => ['required', 'array'],
             'director.ci' => ['required', 'string', 'max:30', 'unique:users,ci'],
@@ -40,6 +47,18 @@ class StoreUnidadEducativaRequest extends FormRequest
             'director.ci.unique' => 'El CI del director ya está registrado.',
             'director.nombres.required' => 'Los nombres del director son obligatorios.',
             'director.apellidos.required' => 'Los apellidos del director son obligatorios.',
+            'distrito_municipal_id.exists' => 'El distrito municipal no pertenece al macrodistrito seleccionado.',
         ];
+    }
+
+    private function reglaDistrito(): Exists
+    {
+        $regla = Rule::exists('distritos_municipales', 'id');
+
+        if ($this->filled('macrodistrito_id')) {
+            $regla->where('macrodistrito_id', $this->integer('macrodistrito_id'));
+        }
+
+        return $regla;
     }
 }

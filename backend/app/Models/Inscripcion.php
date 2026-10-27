@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EstadoInscripcion;
+use App\Enums\ResultadoInscripcion;
 use App\Support\TenantContext;
 use Database\Factories\InscripcionFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,6 +25,9 @@ class Inscripcion extends Model
         'gestion_id',
         'fecha_inscripcion',
         'estado',
+        'resultado_final',
+        'promedio_final',
+        'fecha_resultado',
         'fecha_baja',
         'motivo_baja',
     ];
@@ -33,6 +37,9 @@ class Inscripcion extends Model
         return [
             'fecha_inscripcion' => 'date',
             'estado' => EstadoInscripcion::class,
+            'resultado_final' => ResultadoInscripcion::class,
+            'promedio_final' => 'decimal:2',
+            'fecha_resultado' => 'date',
             'fecha_baja' => 'date',
         ];
     }

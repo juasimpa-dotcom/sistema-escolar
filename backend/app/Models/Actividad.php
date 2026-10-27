@@ -18,6 +18,7 @@ class Actividad extends Model
 
     protected $fillable = [
         'aula_materia_id',
+        'periodo_id',
         'titulo',
         'descripcion',
         'fecha_cumplimiento',
@@ -37,6 +38,11 @@ class Actividad extends Model
     public function aulaMateria(): BelongsTo
     {
         return $this->belongsTo(AulaMateria::class);
+    }
+
+    public function periodo(): BelongsTo
+    {
+        return $this->belongsTo(Periodo::class);
     }
 
     public function notas(): HasMany

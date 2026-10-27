@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\EstadoGenerico;
+use App\Enums\NivelEducativo;
 use App\Enums\Turno;
 use App\Models\Aula;
 use App\Models\Gestion;
@@ -22,6 +23,11 @@ class AulaFactory extends Factory
             'grado' => fake()->randomElement(['1ro', '2do', '3ro', '4to', '5to', '6to']),
             'paralelo' => fake()->randomElement(['A', 'B', 'C']),
             'turno' => fake()->randomElement([Turno::MANANA, Turno::TARDE]),
+            'nivel' => fake()->randomElement([
+                NivelEducativo::INICIAL,
+                NivelEducativo::PRIMARIA,
+                NivelEducativo::SECUNDARIA,
+            ]),
             'estado' => EstadoGenerico::ACTIVO,
         ];
     }

@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Enums\EstadoUnidad;
 use App\Enums\Rol;
+use App\Enums\TipoUnidad;
 use Database\Factories\UnidadEducativaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,7 +24,11 @@ class UnidadEducativa extends Model
         'nombre',
         'codigo',
         'direccion',
+        'zona',
+        'macrodistrito_id',
+        'distrito_municipal_id',
         'telefono',
+        'tipo',
         'estado',
         'fecha_baja',
         'motivo_baja',
@@ -32,6 +38,7 @@ class UnidadEducativa extends Model
     {
         return [
             'estado' => EstadoUnidad::class,
+            'tipo' => TipoUnidad::class,
             'fecha_baja' => 'date',
         ];
     }
@@ -68,5 +75,30 @@ class UnidadEducativa extends Model
     public function citaciones(): HasMany
     {
         return $this->hasMany(Citacion::class);
+    }
+
+    public function macrodistrito(): BelongsTo
+    {
+        return $this->belongsTo(Macrodistrito::class);
+    }
+
+    public function distrito(): BelongsTo
+    {
+        return $this->belongsTo(DistritoMunicipal::class, 'distrito_municipal_id');
+    }
+
+    public function periodos(): HasMany
+    {
+        return $this->hasMany(Periodo::class);
+    }
+
+    public function plazasDocentes(): HasMany
+    {
+        return $this->hasMany(PlazaDocente::class);
+    }
+
+    public function asistenciaDocente(): HasMany
+    {
+        return $this->hasMany(AsistenciaDocente::class);
     }
 }

@@ -52,4 +52,9 @@ class Gestion extends Model
     {
         return $this->hasMany(Inscripcion::class);
     }
+
+    public function periodos(): HasMany
+    {
+        return $this->hasMany(Periodo::class);
+    }
 }

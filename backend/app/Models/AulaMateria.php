@@ -34,6 +34,11 @@ class AulaMateria extends Model
         return $this->belongsTo(User::class, 'profesor_id');
     }
 
+    public function avanceCurricular(): HasMany
+    {
+        return $this->hasMany(AvanceCurricular::class);
+    }
+
     public function horarios(): HasMany
     {
         return $this->hasMany(Horario::class);

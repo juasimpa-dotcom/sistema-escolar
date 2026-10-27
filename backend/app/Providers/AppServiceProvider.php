@@ -6,8 +6,11 @@ use App\Models\Asistencia;
 use App\Models\Licencia;
 use App\Models\Nota;
 use App\Observers\DashboardCacheObserver;
+use App\Policies\ReportePolicy;
+use App\Support\Reporte;
 use Illuminate\Database\PostgresConnection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use PDO;
 
@@ -63,6 +66,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Gate::policy(Reporte::class, ReportePolicy::class);
+
         Asistencia::observe(DashboardCacheObserver::class);
         Licencia::observe(DashboardCacheObserver::class);
         Nota::observe(DashboardCacheObserver::class);

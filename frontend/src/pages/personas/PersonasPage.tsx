@@ -190,7 +190,7 @@ export const PersonasPage = () => {
               required
               inputMode="numeric"
               value={form.valores.ci}
-              onChange={(e) => form.setCampo('ci', e.target.value)}
+              onChange={(e) => form.setCampo('ci', e.target.value.replace(/\D/g, ''))}
               onBlur={form.onBlur('ci')}
               error={form.errorDe('ci')}
             />

@@ -20,7 +20,7 @@ class StorePersonaRequest extends FormRequest
 
         return [
             'rol' => ['required', Rule::in($rolesPermitidos)],
-            'ci' => ['required', 'string', 'max:30', 'unique:users,ci'],
+            'ci' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:30', 'unique:users,ci'],
             'nombres' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')],
@@ -53,6 +53,7 @@ class StorePersonaRequest extends FormRequest
             'rol.required' => 'Debe indicar el rol de la persona.',
             'rol.in' => 'No tiene permiso para crear ese rol.',
             'ci.required' => 'El CI es obligatorio.',
+            'ci.regex' => 'El CI solo debe contener números.',
             'ci.unique' => 'El CI ya está registrado.',
             'nombres.required' => 'Los nombres son obligatorios.',
             'apellidos.required' => 'Los apellidos son obligatorios.',

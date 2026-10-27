@@ -17,14 +17,18 @@ import {
   FileText,
   LayoutDashboard,
   Mail,
-  School,
   ChevronLeft,
   ChevronRight,
+  Map,
+  MapPin,
+  ChartNoAxesCombined,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { AvatarNombre } from '@/components/ui/AvatarNombre';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { LogoMarca } from '@/components/layout/LogoMarca';
+import { RoleBanner } from '@/components/layout/RoleBanner';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -37,8 +41,12 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Inicio', to: '/superadmin', roles: ['superadmin'], icon: Users },
   { label: 'Unidades Educativas', to: '/unidades', roles: ['superadmin'], icon: Building2 },
+  { label: 'Macrodistritos', to: '/catalogo/macrodistritos', roles: ['superadmin'], icon: Map },
+  { label: 'Distritos municipales', to: '/catalogo/distritos', roles: ['superadmin'], icon: MapPin },
+  { label: 'Reportes', to: '/reportes', roles: ['superadmin', 'director'], icon: ChartNoAxesCombined },
   { label: 'Inicio', to: '/director', roles: ['director'], icon: Users },
   { label: 'Panel', to: '/director/dashboard', roles: ['director'], icon: LayoutDashboard },
+  { label: 'Reportes', to: '/reportes', roles: ['director'], icon: ChartNoAxesCombined },
   { label: 'Personas', to: '/personas', roles: ['director', 'administrativo'], icon: Users },
   { label: 'Estudiantes', to: '/estudiantes', roles: ['director', 'administrativo'], icon: GraduationCap },
   { label: 'Gestiones', to: '/gestiones', roles: ['director', 'administrativo'], icon: CalendarDays },
@@ -79,8 +87,8 @@ export const AppLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   const rol = user?.rol as Rol | undefined;
+  const mostrarBanner = rol && (location.pathname === getHomePath(rol) || (rol === 'director' && location.pathname === '/director/dashboard'));
   const items = navItems.filter((item) => rol && item.roles.includes(rol));
-  const initials = user?.nombre_completo?.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
   const handleLogout = async () => {
     await logout();
@@ -90,10 +98,8 @@ export const AppLayout = () => {
   const NavContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className="flex h-full flex-col">
       <div className={cn("flex h-16 items-center border-b px-4", collapsed && !isMobile ? "justify-center px-2" : "justify-between")}>
-        <Link to={getHomePath(rol)} className={cn("flex items-center gap-2", collapsed && !isMobile && "justify-center")}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <School className="h-4 w-4" />
-          </div>
+        <Link to={getHomePath(rol)} className={cn("flex items-center gap-2", collapsed && !isMobile && "justify-center")} aria-label="Inicio del Sistema Escolar">
+          <LogoMarca compact={collapsed && !isMobile} />
           {(!collapsed || isMobile) && <span className="text-sm font-semibold tracking-tight">Sistema Escolar</span>}
         </Link>
         {isMobile && (
@@ -128,9 +134,7 @@ export const AppLayout = () => {
       </nav>
       <div className="border-t p-3">
         <div className={cn("mb-3 flex items-center gap-3", collapsed && !isMobile && "justify-center")}>
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-primary">{initials}</AvatarFallback>
-          </Avatar>
+          <AvatarNombre name={user?.nombre_completo} className="h-9 w-9" />
           {(!collapsed || isMobile) && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{user?.nombre_completo}</p>
@@ -178,7 +182,7 @@ export const AppLayout = () => {
               {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </Button>
             <div className="hidden items-center gap-2 md:flex">
-              <School className="h-4 w-4 text-muted-foreground" />
+              <LogoMarca className="rounded-lg" />
               <span className="text-sm text-muted-foreground">{user?.unidad_educativa?.nombre || 'Sistema Escolar'}</span>
             </div>
           </div>
@@ -188,7 +192,8 @@ export const AppLayout = () => {
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-7xl space-y-6">
+            {mostrarBanner && rol && <RoleBanner role={rol} />}
             <Outlet />
           </div>
         </main>

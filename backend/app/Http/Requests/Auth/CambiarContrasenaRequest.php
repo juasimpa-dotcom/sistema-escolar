@@ -14,8 +14,8 @@ class CambiarContrasenaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password_actual' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password_actual' => ['required', 'string', 'regex:/^[0-9]+$/'],
+            'password' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:6', 'confirmed'],
         ];
     }
 
@@ -23,7 +23,9 @@ class CambiarContrasenaRequest extends FormRequest
     {
         return [
             'password_actual.required' => 'La contraseña actual es obligatoria.',
+            'password_actual.regex' => 'La contraseña actual solo debe contener números.',
             'password.required' => 'La nueva contraseña es obligatoria.',
+            'password.regex' => 'La nueva contraseña solo debe contener números.',
             'password.min' => 'La nueva contraseña debe tener al menos 6 caracteres.',
             'password.confirmed' => 'La confirmación de la nueva contraseña no coincide.',
         ];

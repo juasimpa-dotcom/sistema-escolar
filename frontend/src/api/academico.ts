@@ -413,7 +413,9 @@ export const useSolicitarLicencia = () => {
       api.post('/licencias', payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['licencias'] });
-      qc.invalidateQueries({ queryKey: ['dashboard-resumen'] });
+      qc.invalidateQueries({ queryKey: ['tablero'] });
+      qc.invalidateQueries({ queryKey: ['portal-mi-perfil'] });
+      qc.invalidateQueries({ queryKey: ['portal-hijo'] });
     },
   });
 };
@@ -439,7 +441,9 @@ export const useAprobarLicencia = () => {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['licencias'] });
-      qc.invalidateQueries({ queryKey: ['dashboard-resumen'] });
+      qc.invalidateQueries({ queryKey: ['tablero'] });
+      qc.invalidateQueries({ queryKey: ['portal-mi-perfil'] });
+      qc.invalidateQueries({ queryKey: ['portal-hijo'] });
     },
   });
 };
@@ -468,7 +472,9 @@ export const useRechazarLicencia = () => {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['licencias'] });
-      qc.invalidateQueries({ queryKey: ['dashboard-resumen'] });
+      qc.invalidateQueries({ queryKey: ['tablero'] });
+      qc.invalidateQueries({ queryKey: ['portal-mi-perfil'] });
+      qc.invalidateQueries({ queryKey: ['portal-hijo'] });
     },
   });
 };
@@ -479,7 +485,9 @@ export const useAnularLicencia = () => {
     mutationFn: (id: number) => api.delete(`/licencias/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['licencias'] });
-      qc.invalidateQueries({ queryKey: ['dashboard-resumen'] });
+      qc.invalidateQueries({ queryKey: ['tablero'] });
+      qc.invalidateQueries({ queryKey: ['portal-mi-perfil'] });
+      qc.invalidateQueries({ queryKey: ['portal-hijo'] });
     },
   });
 };

@@ -215,7 +215,7 @@ const PlanillaModal = ({ actividad, onClose }: { actividad: Actividad; onClose: 
               </tr>
             ))}
             {!isLoading && planilla && planilla.filas.length === 0 && (
-              <tr><td colSpan={3} className="px-3 py-6 text-center text-muted-foreground">No hay estudiantes inscritos</td></tr>
+              <tr><td colSpan={3} className="px-3 py-2"><EmptyState title="No hay estudiantes inscritos" compact className="border-0 bg-transparent" /></td></tr>
             )}
           </tbody>
         </table>

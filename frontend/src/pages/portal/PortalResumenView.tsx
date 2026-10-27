@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CalendarCheck, ClipboardList, FileText, GraduationCap, Mail, TrendingDown, UserRound } from 'lucide-react';
 import type { PortalResumen } from '../../types/portal';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const estadoAsistenciaBadge = (estado: string) => {
   const mapa: Record<string, string> = {
@@ -106,9 +107,7 @@ export const PortalResumenView = ({ data }: { data: PortalResumen }) => {
             </div>
           )}
           {data.materias.length === 0 && (
-            <p className="rounded-lg border border-border/60 bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
-              Sin materias asignadas.
-            </p>
+            <EmptyState title="Sin materias asignadas" compact className="col-span-full" />
           )}
           {data.materias.map((m) => (
             <div key={m.aula_materia_id} className="rounded-lg border border-border/60 bg-card p-4 shadow-sm">
@@ -149,7 +148,7 @@ export const PortalResumenView = ({ data }: { data: PortalResumen }) => {
                       </tr>
                     ))}
                     {m.actividades.length === 0 && (
-                      <tr><td colSpan={3} className="py-2 text-center text-xs text-muted-foreground/70">Sin actividades</td></tr>
+                      <tr><td colSpan={3} className="py-2"><EmptyState title="Sin actividades" compact className="border-0 bg-transparent" /></td></tr>
                     )}
                   </tbody>
                 </table>
@@ -182,7 +181,7 @@ export const PortalResumenView = ({ data }: { data: PortalResumen }) => {
                 </tr>
               ))}
               {data.asistencia.detalle.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Sin registros de asistencia.</td></tr>
+                <tr><td colSpan={4} className="px-4 py-2"><EmptyState title="Sin registros de asistencia" compact className="border-0 bg-transparent" /></td></tr>
               )}
             </tbody>
           </table>

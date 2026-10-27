@@ -17,7 +17,7 @@ class UpdatePersonaRequest extends FormRequest
         $persona = $this->route('persona');
 
         return [
-            'ci' => ['required', 'string', 'max:30', Rule::unique('users', 'ci')->ignore($persona->id)],
+            'ci' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:30', Rule::unique('users', 'ci')->ignore($persona->id)],
             'nombres' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($persona->id)],
@@ -29,6 +29,7 @@ class UpdatePersonaRequest extends FormRequest
     {
         return [
             'ci.required' => 'El CI es obligatorio.',
+            'ci.regex' => 'El CI solo debe contener números.',
             'ci.unique' => 'El CI ya está registrado.',
             'nombres.required' => 'Los nombres son obligatorios.',
             'apellidos.required' => 'Los apellidos son obligatorios.',

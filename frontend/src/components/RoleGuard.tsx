@@ -14,7 +14,7 @@ export const RoleGuard = ({ allowedRoles }: RoleGuardProps) => {
   const rol = user?.rol as Rol | undefined;
 
   if (!rol || !allowedRoles.includes(rol)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/acceso-denegado" replace />;
   }
 
   return <Outlet />;

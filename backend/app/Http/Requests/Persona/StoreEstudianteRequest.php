@@ -20,7 +20,7 @@ class StoreEstudianteRequest extends FormRequest
     {
         return [
             'estudiante' => ['required', 'array'],
-            'estudiante.ci' => ['required', 'string', 'max:30', 'unique:users,ci'],
+            'estudiante.ci' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:30', 'unique:users,ci'],
             'estudiante.nombres' => ['required', 'string', 'max:255'],
             'estudiante.apellidos' => ['required', 'string', 'max:255'],
             'estudiante.fecha_nacimiento' => ['nullable', 'date'],
@@ -33,7 +33,7 @@ class StoreEstudianteRequest extends FormRequest
                 Rule::exists('users', 'id')->where('rol', Rol::PADRE->value),
             ],
             'padre_nuevo' => ['nullable', 'array', 'required_without:padre_existente_id'],
-            'padre_nuevo.ci' => ['required_with:padre_nuevo', 'string', 'max:30', 'unique:users,ci'],
+            'padre_nuevo.ci' => ['required_with:padre_nuevo', 'string', 'regex:/^[0-9]+$/', 'max:30', 'unique:users,ci'],
             'padre_nuevo.nombres' => ['required_with:padre_nuevo', 'string', 'max:255'],
             'padre_nuevo.apellidos' => ['required_with:padre_nuevo', 'string', 'max:255'],
             'padre_nuevo.email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')],
@@ -47,12 +47,14 @@ class StoreEstudianteRequest extends FormRequest
     {
         return [
             'estudiante.ci.required' => 'El CI del estudiante es obligatorio.',
+            'estudiante.ci.regex' => 'El CI del estudiante solo debe contener números.',
             'estudiante.ci.unique' => 'El CI del estudiante ya está registrado.',
             'estudiante.nombres.required' => 'Los nombres del estudiante son obligatorios.',
             'estudiante.apellidos.required' => 'Los apellidos del estudiante son obligatorios.',
             'padre_existente_id.exists' => 'El padre seleccionado no existe o no tiene rol de padre.',
             'padre_nuevo.required_without' => 'Debe asociar un padre existente o registrar uno nuevo.',
             'padre_nuevo.ci.required_with' => 'El CI del padre es obligatorio.',
+            'padre_nuevo.ci.regex' => 'El CI del padre solo debe contener números.',
             'padre_nuevo.ci.unique' => 'El CI del padre ya está registrado.',
             'padre_nuevo.nombres.required_with' => 'Los nombres del padre son obligatorios.',
             'padre_nuevo.apellidos.required_with' => 'Los apellidos del padre son obligatorios.',

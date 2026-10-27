@@ -22,15 +22,26 @@ class UnidadEducativaController extends Controller
         $this->authorize('viewAny', UnidadEducativa::class);
 
         $unidades = UnidadEducativa::query()
-            ->select(['id', 'nombre', 'codigo', 'direccion', 'telefono', 'estado', 'fecha_baja', 'motivo_baja', 'created_at'])
-            ->with(['director:id,unidad_educativa_id,nombres,apellidos,ci,email,telefono,rol'])
+            ->select([
+                'id', 'nombre', 'codigo', 'direccion', 'zona', 'macrodistrito_id',
+                'distrito_municipal_id', 'tipo', 'telefono', 'estado',
+                'fecha_baja', 'motivo_baja', 'created_at',
+            ])
+            ->with([
+                'director:id,unidad_educativa_id,nombres,apellidos,ci,email,telefono,rol',
+                'macrodistrito:id,codigo,nombre,tipo',
+                'distrito:id,macrodistrito_id,numero,nombre',
+            ])
             ->when($request->filled('buscar'), function ($q) use ($request) {
-                $termino = $request->string('buscar');
+                $termino = '%'.mb_strtolower($request->string('buscar')).'%';
                 $q->where(fn ($sub) => $sub
-                    ->where('nombre', 'ilike', "%{$termino}%")
-                    ->orWhere('codigo', 'ilike', "%{$termino}%"));
+                    ->whereRaw('lower(nombre) like ?', [$termino])
+                    ->orWhereRaw('lower(codigo) like ?', [$termino]));
             })
             ->when($request->filled('estado'), fn ($q) => $q->where('estado', $request->string('estado')))
+            ->when($request->filled('macrodistrito_id'), fn ($q) => $q->where('macrodistrito_id', $request->integer('macrodistrito_id')))
+            ->when($request->filled('distrito_municipal_id'), fn ($q) => $q->where('distrito_municipal_id', $request->integer('distrito_municipal_id')))
+            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->string('tipo')))
             ->orderBy('nombre')
             ->paginate($request->integer('por_pagina', 15));
 
@@ -41,7 +52,7 @@ class UnidadEducativaController extends Controller
     {
         $unidad = $this->service->crear($request->validated());
 
-        return (new UnidadEducativaResource($unidad->load('director')))
+        return (new UnidadEducativaResource($unidad->load(['director', 'macrodistrito', 'distrito'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -50,14 +61,14 @@ class UnidadEducativaController extends Controller
     {
         $this->authorize('view', $unidad);
 
-        return new UnidadEducativaResource($unidad->load('director'));
+        return new UnidadEducativaResource($unidad->load(['director', 'macrodistrito', 'distrito']));
     }
 
     public function update(UpdateUnidadEducativaRequest $request, UnidadEducativa $unidad): UnidadEducativaResource
     {
         $unidad = $this->service->actualizar($unidad, $request->validated());
 
-        return new UnidadEducativaResource($unidad->load('director'));
+        return new UnidadEducativaResource($unidad->load(['director', 'macrodistrito', 'distrito']));
     }
 
     public function darDeBaja(DarDeBajaRequest $request, UnidadEducativa $unidad): UnidadEducativaResource

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\EstadoUsuario;
 use App\Enums\Rol;
+use App\Enums\Sexo;
 use App\Models\UnidadEducativa;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -31,6 +32,7 @@ class UserFactory extends Factory
             'apellidos' => $apellidos,
             'email' => fake()->unique()->safeEmail(),
             'telefono' => fake()->phoneNumber(),
+            'sexo' => fake()->randomElement([Sexo::MASCULINO, Sexo::FEMENINO]),
             'password' => static::$password ??= Hash::make('password'),
             'debe_cambiar_password' => true,
             'estado' => EstadoUsuario::ACTIVO,

@@ -10,6 +10,8 @@ import { HomeRedirect } from './pages/HomeRedirect';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { SuperadminInicio } from './pages/superadmin/Inicio';
 import { UnidadesPage } from './pages/superadmin/UnidadesPage';
+import { MacrodistritosPage } from './pages/superadmin/MacrodistritosPage';
+import { DistritosMunicipalesPage } from './pages/superadmin/DistritosMunicipalesPage';
 import { DirectorInicio } from './pages/director/Inicio';
 import { DashboardPage } from './pages/director/DashboardPage';
 import { CitacionesPage } from './pages/citaciones/CitacionesPage';
@@ -26,8 +28,12 @@ import { ProfesorActividadesPage } from './pages/profesor/ActividadesPage';
 import { ProfesorAsistenciaPage } from './pages/profesor/AsistenciaPage';
 import { LicenciasPage } from './pages/director/LicenciasPage';
 import { FamiliaInicio } from './pages/familia/Inicio';
+import { FamiliaPortal } from './pages/familia/PortalPage';
 import { FamiliaLicenciasPage } from './pages/familia/LicenciasPage';
 import { EstudianteInicio } from './pages/estudiante/Inicio';
+import { EstudiantePortal } from './pages/estudiante/PortalPage';
+import { ReportesPage } from './pages/reportes/ReportesPage';
+import { AccessDeniedPage } from './pages/AccessDeniedPage';
 
 function App() {
   return (
@@ -39,10 +45,16 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/cambiar-contrasena" element={<CambiarContrasenaObligatorio />} />
             <Route element={<AppLayout />}>
+              <Route path="/acceso-denegado" element={<AccessDeniedPage />} />
               <Route path="/" element={<HomeRedirect />} />
+              <Route element={<RoleGuard allowedRoles={['superadmin', 'director']} />}>
+                <Route path="/reportes" element={<ReportesPage />} />
+              </Route>
               <Route element={<RoleGuard allowedRoles={['superadmin']} />}>
                 <Route path="/superadmin" element={<SuperadminInicio />} />
                 <Route path="/unidades" element={<UnidadesPage />} />
+                <Route path="/catalogo/macrodistritos" element={<MacrodistritosPage />} />
+                <Route path="/catalogo/distritos" element={<DistritosMunicipalesPage />} />
               </Route>
               <Route element={<RoleGuard allowedRoles={['director']} />}>
                 <Route path="/director" element={<DirectorInicio />} />
@@ -69,13 +81,13 @@ function App() {
               </Route>
               <Route element={<RoleGuard allowedRoles={['padre']} />}>
                 <Route path="/familia" element={<FamiliaInicio />} />
-                <Route path="/familia/portal" element={<FamiliaInicio />} />
+                <Route path="/familia/portal" element={<FamiliaPortal />} />
                 <Route path="/familia/licencias" element={<FamiliaLicenciasPage />} />
                 <Route path="/familia/citaciones" element={<BandejaCitaciones />} />
               </Route>
               <Route element={<RoleGuard allowedRoles={['estudiante']} />}>
                 <Route path="/estudiante" element={<EstudianteInicio />} />
-                <Route path="/estudiante/portal" element={<EstudianteInicio />} />
+                <Route path="/estudiante/portal" element={<EstudiantePortal />} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>

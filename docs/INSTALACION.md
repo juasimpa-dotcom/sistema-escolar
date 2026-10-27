@@ -11,7 +11,7 @@ Antes de ejecutar el sistema, asegúrate de tener instalados los siguientes prog
 | [Composer](https://getcomposer.org/) | Última versión | Gestor de dependencias de PHP |
 | [Node.js](https://nodejs.org/) | 20.x o superior | Requerido por Vite y React 19 |
 | [npm](https://www.npmjs.com/) | 10.x o superior | Viene incluido con Node.js |
-| [PostgreSQL](https://www.postgresql.org/) | 18.x | Base de datos principal del proyecto (recomendado) |
+| [PostgreSQL](https://www.postgresql.org/) | 14 o superior | Base de datos principal del proyecto (recomendado) |
 | [SQLite](https://www.sqlite.org/) | Última versión | Opcional para pruebas locales rápidas |
 
 > Nota: El proyecto está configurado para usar **PostgreSQL** en desarrollo, tal como se documenta en el sistema. Las pruebas utilizan `SQLite` en memoria.
@@ -71,12 +71,12 @@ php artisan db:seed --class=DemoSeeder
 ### 3.5 Levantar el servidor backend
 
 ```bash
-php artisan serve
+php artisan serve --host=0.0.0.0 --port=8000
 ```
 
-El backend estará disponible en: `http://localhost:8000`
+El backend escucha en todas las interfaces en el puerto `8000`. En el servidor puedes abrirlo como `http://localhost:8000` o con su IP LAN, por ejemplo `http://10.225.150.106:8000`.
 
-La API base es: `http://localhost:8000/api/v1`
+La API base se resuelve como `http(s)://<hostname-del-frontend>:8000/api/v1`.
 
 ## 4. Configurar el Frontend (React + Vite)
 
@@ -92,10 +92,34 @@ npm install
 ### 4.2 Levantar el servidor de desarrollo
 
 ```bash
-npm run dev
+npm run dev -- --host 0.0.0.0
 ```
 
-El frontend estará disponible en: `http://localhost:5173`
+Vite escucha en todas las interfaces. En el servidor abre `http://localhost:5173`; desde otro equipo usa `http://<IP-LAN-del-servidor>:5173`.
+
+No configures `VITE_API_URL` en `frontend/.env` durante desarrollo: `src/api/axios.ts` usa automáticamente el hostname con que se abrió el frontend. Define esa variable solo si en producción la API tiene otro origen.
+
+### 4.3 Acceso desde otro equipo de la red local (Windows/CMD)
+
+Inicia cada servidor en una ventana CMD diferente. Si se modificó la configuración, limpia la caché de Laravel:
+
+```cmd
+cd /d C:\Proyectos\sistema-escolar\backend
+php artisan config:clear
+php artisan cache:clear
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+En otra ventana CMD:
+
+```cmd
+cd /d C:\Proyectos\sistema-escolar\frontend
+npm run dev -- --host 0.0.0.0
+```
+
+Desde el otro equipo, abre primero `http://<IP-LAN-servidor>:8000/api/v1/auth/login`. Login solo admite `POST`, por lo que el navegador normalmente mostrará `405 Method Not Allowed`; eso confirma que alcanzó Laravel. Luego abre `http://<IP-LAN-servidor>:5173` y prueba el inicio de sesión. Si no conecta, permite los puertos TCP `8000` y `5173` en el firewall de Windows del servidor.
+
+La autenticación de API utiliza `Authorization: Bearer` y tokens Sanctum; no requiere cookies de sesión ni credenciales cross-origin.
 
 ## 5. Ejecución Rápida (Opcional)
 
@@ -106,6 +130,7 @@ composer run dev
 ```
 
 Esto levantará: servidor Laravel, cola, logs y servidor Vite al mismo tiempo.
+Este atajo es práctico para desarrollo en la misma PC. Para acceder desde otros equipos, usa los comandos explícitos de la sección 4.3 para que ambos servidores escuchen en `0.0.0.0`.
 
 ## 6. Credenciales de Prueba
 
@@ -148,9 +173,13 @@ npm run preview  # Previsualizar build de producción
 |---|---|
 | Error de conexión a BD | Verifica que PostgreSQL esté corriendo y las credenciales en `.env` sean correctas. |
 | `APP_KEY` vacía | Ejecuta `php artisan key:generate` en la carpeta `backend/`. |
-| Errores de CORS | Asegúrate de que `APP_URL` en backend y la URL del frontend coincidan con las configuradas. |
+| Error de CORS | En desarrollo verifica `supports_credentials=false`, ausencia de `withCredentials` y reinicia tras `php artisan config:clear`. En producción define `FRONTEND_URL` con el origen exacto de la SPA. |
+| API apunta a `localhost` desde otro equipo | Elimina `VITE_API_URL` de `frontend/.env`, reinicia Vite y abre la SPA usando la IP LAN del servidor. |
+| Otro equipo no conecta | Confirma que ambos estén en la misma red WiFi, inicia Vite y Laravel con `--host 0.0.0.0` y permite TCP `5173` y `8000` en el firewall del servidor. |
 | Puerto ocupado | Cambia el puerto con `php artisan serve --port=8001` o `npm run dev -- --port=5174`. |
 | Dependencias faltantes | Vuelve a ejecutar `composer install` o `npm install`. |
+
+En desarrollo CORS permite `allowed_origins=['*']` porque `supports_credentials=false`. Para producción, `backend/config/cors.php` usa el origen configurado en `FRONTEND_URL`; no uses `*` junto con cookies/credenciales.
 
 ## 9. Documentación Adicional
 

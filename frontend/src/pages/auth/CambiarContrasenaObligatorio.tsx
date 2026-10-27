@@ -6,7 +6,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/input';
 import { useFormValidacion } from '@/hooks/useFormValidacion';
 import { extractMessage } from '@/lib/errors';
-import { minLongitud, requerido } from '@/lib/validacion';
+import { minLongitud, requerido, soloNumeros } from '@/lib/validacion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { AlertCircle, Eye, EyeOff, KeyRound, Loader2, School, ShieldCheck } from 'lucide-react';
@@ -21,9 +21,9 @@ export const CambiarContrasenaObligatorio = () => {
   const form = useFormValidacion(
     { password_actual: '', password: '', password_confirmation: '' },
     {
-      password_actual: [requerido('Ingresá tu contraseña actual')],
-      password: [requerido('Ingresá la nueva contraseña'), minLongitud(8, 'La nueva contraseña debe tener al menos 8 caracteres')],
-      password_confirmation: [requerido('Confirmá la nueva contraseña')],
+      password_actual: [requerido('Ingresá tu contraseña actual'), soloNumeros('La contraseña solo debe contener números')],
+      password: [requerido('Ingresá la nueva contraseña'), soloNumeros('La contraseña solo debe contener números'), minLongitud(8, 'La nueva contraseña debe tener al menos 8 caracteres')],
+      password_confirmation: [requerido('Confirmá la nueva contraseña'), soloNumeros('La contraseña solo debe contener números')],
     }
   );
 
@@ -107,7 +107,7 @@ export const CambiarContrasenaObligatorio = () => {
                   id="actual"
                   type="password"
                   value={form.valores.password_actual}
-                  onChange={(e) => form.setCampo('password_actual', e.target.value)}
+                  onChange={(e) => form.setCampo('password_actual', e.target.value.replace(/\D/g, ''))}
                   onBlur={form.onBlur('password_actual')}
                   autoComplete="current-password"
                   aria-invalid={!!form.errorDe('password_actual')}
@@ -119,7 +119,7 @@ export const CambiarContrasenaObligatorio = () => {
                     id="nueva"
                     type={verPassword ? 'text' : 'password'}
                     value={form.valores.password}
-                    onChange={(e) => form.setCampo('password', e.target.value)}
+                    onChange={(e) => form.setCampo('password', e.target.value.replace(/\D/g, ''))}
                     onBlur={form.onBlur('password')}
                     autoComplete="new-password"
                     aria-invalid={!!errorNueva}
@@ -140,7 +140,7 @@ export const CambiarContrasenaObligatorio = () => {
                   id="confirmar"
                   type={verPassword ? 'text' : 'password'}
                   value={form.valores.password_confirmation}
-                  onChange={(e) => form.setCampo('password_confirmation', e.target.value)}
+                  onChange={(e) => form.setCampo('password_confirmation', e.target.value.replace(/\D/g, ''))}
                   onBlur={form.onBlur('password_confirmation')}
                   autoComplete="new-password"
                   aria-invalid={!!errorConfirmacion}
